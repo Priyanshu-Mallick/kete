@@ -47,8 +47,8 @@ dependencies {
     implementation 'com.google.gms:google-services:4.3.15'
     implementation 'com.github.androidmads:QRGenerator:1.0.0'
     implementation 'com.google.zxing:core:3.5.1'
-    implementation 'androidmads.library.qrgenerator:QRGenearatot:1.0.4'
-    implementation 'com.github.User:Repo:Tag'
+//    implementation 'androidmads.library.qrgenerator:QRGenearatot:1.0.4'
+//    implementation 'com.github.User:Repo:Tag'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'androidx.appcompat:appcompat:1.6.1'
     testImplementation 'junit:junit:4.13.2'
