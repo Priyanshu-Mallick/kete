@@ -1,5 +1,18 @@
 package com.example.kete;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.os.Bundle;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.MultiFormatWriter;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.journeyapps.barcodescanner.BarcodeEncoder;
+import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -15,6 +28,10 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
+
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -28,15 +45,13 @@ import com.google.firebase.database.ValueEventListener;
 public class ListActivity extends AppCompatActivity {
 
     private static final String TAG = "QRGeneration";
-    private Button qr_button;
+
     private Button add_list_button;
     private Button edit_list_button;
 
-    ImageView imageView;
+    ImageView imageCode;
     FirebaseDatabase fDatabase;
     private String savePath = Environment.getExternalStorageDirectory().getPath() + "/QRCode/";
-    private Bitmap bitmap;
-    private QRGEncoder qrgEncoder;
     DatabaseReference dRef;
     String e_mail;
 
@@ -44,106 +59,78 @@ public class ListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list);
+        setContentView(R.layout.activity_list);
+        Button btnGenerate = findViewById(R.id.qr_button);
+        //Text will be entered here to generate QR code
+        //EditText etText = findViewById(R.id.etText);
+        ImageView imageCode = findViewById(R.id.qr_code_image);     //to be checked
+        btnGenerate.setOnClickListener(v -> {
+                    //getting text from input text field.
+                    // String myText = etText.getText().toString().trim();
+                    //initializing MultiFormatWriter for QR code
+                    MultiFormatWriter mWriter = new MultiFormatWriter();
 
-        qr_button = findViewById(R.id.qr_button);
-        imageView = findViewById(R.id.qr_code_image);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            savePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getPath() + "/QRCode/";
-        }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        savePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getPath() + "/QRCode/";
+                    }
 
-        final Bundle bundle = getIntent().getExtras();
+                    final Bundle bundle = getIntent().getExtras();
 
-        fDatabase = FirebaseDatabase.getInstance();
-        dRef = fDatabase.getReference().child("email");
-
-        QRGEncoder qrgEncoder = new QRGEncoder(null, bundle, QRGContents.Type.CONTACT, 500);
-        try {
-            // Getting QR-Code as Bitmap
-            bitmap = qrgEncoder.getBitmap();
-            // Setting Bitmap to ImageView
-            imageView.setImageBitmap(bitmap);
-        } catch (Exception e) {
-            Log.v(TAG, e.toString());
-        }
-
-        dRef.child("email").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if(snapshot.exists()){
-                    e_mail = snapshot.getValue(String.class);
-                }
-                else{
-                    Toast.makeText(ListActivity.this, "You may not registered before!", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
-
-        qr_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (e_mail.length() > 0) {
-                    WindowManager manager = (WindowManager) getSystemService(WINDOW_SERVICE);
-                    Display display = manager.getDefaultDisplay();
-                    Point point = new Point();
-                    display.getSize(point);
-                    int width = point.x;
-                    int height = point.y;
-                    int smallerDimension = Math.min(width, height);
-                    smallerDimension = smallerDimension * 3 / 4;
-
-                    qrgEncoder = new QRGEncoder(e_mail, null, QRGContents.Type.TEXT, smallerDimension);
-
+                    fDatabase = FirebaseDatabase.getInstance();
+                    dRef = fDatabase.getReference().child("email");
+                    e_mail = dRef.toString();
                     try {
-                        bitmap = qrgEncoder.getBitmap();
-                        imageView.setImageBitmap(bitmap);
-                    } catch (Exception e) {
+                        //BitMatrix class to encode entered text and set Width & Height
+                        BitMatrix mMatrix = mWriter.encode(e_mail, BarcodeFormat.QR_CODE, 400, 400);
+                        BarcodeEncoder mEncoder = new BarcodeEncoder();
+                        Bitmap mBitmap = mEncoder.createBitmap(mMatrix);//creating bitmap of code
+                        imageCode.setImageBitmap(mBitmap);//Setting generated QR code to imageView
+                        // to hide the keyboard
+                        InputMethodManager manager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                        //manager.hideSoftInputFromWindow(etText.getApplicationWindowToken(), 0);
+                    } catch (WriterException e) {
                         e.printStackTrace();
                     }
-                } else {
-                    Toast.makeText(ListActivity.this, "Error Occured", Toast.LENGTH_SHORT).show();
-                }
-//                //initializing MultiFormatWriter for QR code
-//                MultiFormatWriter mWriter = new MultiFormatWriter();
+
+
+                    dRef.child("email").addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            if (snapshot.exists()) {
+                                e_mail = snapshot.getValue(String.class);
+                            } else {
+                                Toast.makeText(ListActivity.this, "You may not registered before!", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+
+
+//        findViewById(R.id.save_qr).setOnClickListener(v -> {
+//            if (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
 //                try {
-//                    //BitMatrix class to encode entered text and set Width & Height
-//                    BitMatrix mMatrix = mWriter.encode(e_mail, BarcodeFormat.QR_CODE, 400, 400);
-//                    BarcodeEncoder mEncoder = new BarcodeEncoder();
-//                    Bitmap mBitmap = mEncoder.createBitmap(mMatrix);//creating bitmap of code
-//                    imageView.setImageBitmap(mBitmap);//Setting generated QR code to imageView
-//                }
-//                catch (WriterException e) {
+//                    boolean save = new QRGSaver().save(savePath, bitmap, QRGContents.ImageType.IMAGE_JPEG);
+//                    String result = save ? "Image Saved" : "Image Not Saved";
+//                    Toast.makeText(this,result, Toast.LENGTH_SHORT).show();
+//                } catch (Exception e) {
 //                    e.printStackTrace();
 //                }
-            }
-        });
-
-        findViewById(R.id.save_qr).setOnClickListener(v -> {
-            if (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-                try {
-                    boolean save = new QRGSaver().save(savePath, bitmap, QRGContents.ImageType.IMAGE_JPEG);
-                    String result = save ? "Image Saved" : "Image Not Saved";
-                    Toast.makeText(this,result, Toast.LENGTH_SHORT).show();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } else {
-                Toast.makeText(this, "can't access to the external storage", Toast.LENGTH_SHORT).show();
-            }
-        });
-
+//            } else {
+//                Toast.makeText(this, "can't access to the external storage", Toast.LENGTH_SHORT).show();
+//            }
+//        });
+            });
         findViewById(R.id.add_list_button).setOnClickListener(v -> {
             startActivity(new Intent(ListActivity.this, AddListActivity.class));
         });
         findViewById(R.id.edit_list_button).setOnClickListener(v -> {
             startActivity(new Intent(ListActivity.this, EditListActivity.class));
         });
-
 
     }
 }
