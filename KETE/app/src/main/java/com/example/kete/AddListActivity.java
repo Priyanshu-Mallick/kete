@@ -20,11 +20,11 @@ public class AddListActivity extends AppCompatActivity {
     String  price;
     private ListView listView;
     private FloatingActionButton fab;
-    ArrayList<LvItem> arrayList = new ArrayList<>();
+    ArrayList<LvItem>arrayList = new ArrayList<>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_add_list);
 
         listView = findViewById(R.id.list_view);
         fab = findViewById(R.id.fab);
@@ -37,8 +37,6 @@ public class AddListActivity extends AppCompatActivity {
                 EditText item_name = dialog.findViewById(R.id.item_name);
                 EditText item_price = dialog.findViewById(R.id.item_price);
                 Button btnsave = dialog.findViewById(R.id.btnsave);
-
-
 
                 btnsave.setOnClickListener(new View.OnClickListener() {
                     @Override
